@@ -32,13 +32,13 @@ except FileNotFoundError:
 # =============================================
 # Liste des colonnes supprimées (corrélation > 0.95)
 # =============================================
-# VOUS DEVEZ METTRE ICI les colonnes exactes supprimées lors de l'entraînement
-# Exemple basé sur UNSW-NB15 typique :
-DROPPED_CORR_COLUMNS = [
-    # 'sttl',  # souvent corrélé avec 'dttl'
-    # 'dload', # souvent corrélé avec 'dbytes'
-    # 'ct_srv_dst', # etc.
-]
+try:
+    import joblib
+    DROPPED_CORR_COLUMNS = joblib.load("models/dropped_columns.pkl")
+    print(f"✅ {len(DROPPED_CORR_COLUMNS)} colonnes corrélées chargées")
+except FileNotFoundError:
+    print("⚠️ dropped_columns.pkl introuvable, aucune colonne supprimée")
+    DROPPED_CORR_COLUMNS = []
 
 # =============================================
 # Encodage des colonnes catégorielles
