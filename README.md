@@ -1,14 +1,16 @@
 <h1 align="center">Système de Détection d'Intrusion Réseau (IDS)</h1>
-<h3 align="center">Basé sur l'architecture Deep Learning GRU Bidirectionnel</h3>
+<h3 align="center">Deep Learning (Bi-GRU) & Application de Surveillance Temps Réel</h3>
 
 <p align="center">
-   <img src="./docs/The-unfold-form-of-a-Bidirectional-GRU.ppm" alt="GRU Architecture">
+  <img src="./docs/The-unfold-form-of-a-Bidirectional-GRU.ppm" alt="GRU Architecture" width="600">
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python">
-  <img src="https://img.shields.io/badge/TensorFlow-2.0%2B-orange" alt="TensorFlow">
+  <img src="https://img.shields.io/badge/TensorFlow-2.10%2B-orange" alt="TensorFlow">
+  <img src="https://img.shields.io/badge/Streamlit-App-FF4B4B" alt="Streamlit">
   <img src="https://img.shields.io/badge/Dataset-UNSW--NB15-green" alt="Dataset">
+  <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen" alt="Status">
 </p>
 
 <p align="center">
@@ -20,49 +22,85 @@
 <h2>1. Présentation du Projet</h2>
 
 <p align="justify">
-Ce projet implémente un Système de Détection d'Intrusion (IDS) de nouvelle génération utilisant des techniques avancées de Deep Learning. L'objectif est de classifier le trafic réseau comme <strong>Normal</strong> ou <strong>Attaque</strong> avec une haute précision et un taux de faux positifs minimal.
+Ce projet implémente un <strong>Système de Détection d'Intrusion (IDS)</strong> complet, allant de l'entraînement d'un modèle de Deep Learning avancé jusqu'à son déploiement dans une interface web de démonstration.
 </p>
-
 <p align="justify">
-Le modèle est entraîné sur le dataset <strong>UNSW-NB15</strong>, reconnu pour sa complexité et sa représentation réaliste des menaces modernes. L'architecture repose sur des réseaux de neurones récurrents de type <strong>GRU (Gated Recurrent Unit) Bidirectionnel</strong>, optimisés pour traiter les données séquentielles temporelles.
+Le système est capable de classifier le trafic réseau en <strong>Normal</strong> ou <strong>Attaque</strong> avec une précision d'environ <strong>98%</strong> sur le dataset complexe <strong>UNSW-NB15</strong>. Il utilise une architecture de réseaux de neurones récurrents (GRU Bidirectionnel) pour analyser les séquences temporelles du trafic.
 </p>
 
 <h2>2. Architecture Technique</h2>
 
-<h3>Méthodologie de Pré-traitement</h3>
+<h3>Pipeline de Données (Data Pipeline)</h3>
+Pour garantir la fiabilité entre l'entraînement et l'inférence (l'application), le pipeline (défini dans <code>utils.py</code>) suit ces étapes :
 <ul>
-  <li><strong>Nettoyage de Données :</strong> Suppression des features hautement corrélées (> 95%) pour réduire le bruit.</li>
-  <li><strong>Standardisation :</strong> Utilisation de <code>StandardScaler</code> pour normaliser les données (Moyenne = 0, Écart-type = 1), assurant une convergence rapide du modèle.</li>
-  <li><strong>Gestion du Déséquilibre :</strong> Calcul et application de <code>class_weights</code> pour équilibrer l'apprentissage entre les classes majoritaires et minoritaires.</li>
-  <li><strong>Séquençage :</strong> Transformation des données en fenêtres temporelles glissantes (Time Steps) pour l'analyse contextuelle.</li>
+  <li><strong>Nettoyage :</strong> Suppression des features fortement corrélées via une liste d'exclusion persistante (<code>dropped_columns.pkl</code>).</li>
+  <li><strong>Encodage :</strong> Transformation des variables catégorielles (proto, service, state) via des <code>LabelEncoders</code> sauvegardés.</li>
+  <li><strong>Normalisation :</strong> Application d'un <code>StandardScaler</code> pour centrer-réduire les données numériques.</li>
+  <li><strong>Séquençage :</strong> Transformation des données en fenêtres temporelles (Time Steps = 10) pour l'analyse contextuelle par le RNN.</li>
 </ul>
 
 <h3>Modèle Deep Learning</h3>
-Le modèle utilise l'API Keras (TensorFlow) avec la structure suivante :
+L'architecture du modèle (API Keras/TensorFlow) est conçue pour la robustesse :
 <ol>
-  <li><strong>Input Layer :</strong> Séquences temporelles.</li>
-  <li><strong>Bidirectional GRU :</strong> Capture du contexte passé et futur du flux réseau.</li>
-  <li><strong>Régularisation :</strong> Application de <code>Dropout (0.5)</code> et de régularisation <code>L2</code> pour empêcher le surapprentissage (Overfitting).</li>
-  <li><strong>Batch Normalization :</strong> Stabilisation de l'apprentissage.</li>
-  <li><strong>Output Layer :</strong> Sigmoid pour la classification binaire.</li>
+  <li><strong>Input Layer :</strong> Séquences temporelles (10 pas de temps).</li>
+  <li><strong>Bidirectional GRU :</strong> 2 couches (64 et 32 unités) pour capturer le contexte passé et futur.</li>
+  <li><strong>Régularisation :</strong> Dropout (0.5) et pénalité L2 pour éviter le surapprentissage.</li>
+  <li><strong>Batch Normalization :</strong> Pour accélérer et stabiliser la convergence.</li>
+  <li><strong>Output :</strong> Neurone Sigmoid pour la classification binaire.</li>
 </ol>
 
-<h2>3. Structure du Répertoire</h2>
+<h2>3. Structure du Projet</h2>
 
 <pre>
 .
-├── models/                  # Contient le modèle entraîné et le scaler
-│   ├── ids_gru_model.keras  # Le fichier modèle Deep Learning
-│   └── scaler_std.pkl       # Le fichier de normalisation (Joblib)
-├── requirements.txt         # Liste des dépendances Python
-├── .gitignore               # Configuration pour ignorer le dataset et les fichiers temporaires
-├── unsw_nb15_RNN_LSTM.ipynb # Notebook principal (Entraînement et Évaluation)
-└── README.md                # Documentation du projet
+├── app.py                      # Application Web de démonstration (Interface Streamlit)
+├── utils.py                    # Fonctions utilitaires pour le pré-traitement et l'inférence
+├── requirements.txt            # Liste des dépendances Python
+├── unsw_nb15_RNN_LSTM.ipynb    # Notebook Jupyter d'entraînement et d'analyse (EDA)
+│
+├── models/                     # Artefacts du modèle (Sauvegardés après entraînement)
+│   ├── ids_gru_model.keras     # Le modèle de Deep Learning compilé
+│   ├── scaler_std.pkl          # Le scaler (StandardScaler)
+│   ├── label_encoders.pkl      # Dictionnaire des encodeurs catégoriels
+│   └── dropped_columns.pkl     # Liste des colonnes ignorées
+│
+├── data_sample/                # Données pour la démonstration
+│   └── unsw_nb15_demo_binary_2000.csv  # Échantillon de 2000 lignes réelles pour test
+│
+├── UNSW-NB15-Dataset/          # Dataset original complet (non tracké par git)
+├── docs/                       # Documentation et images d'architecture
+└── .gitignore                  # Configuration Git
 </pre>
 
-<h2>4. Performances</h2>
+<h2>4. Fonctionnalités de l'Application</h2>
 
-Les résultats obtenus sur le jeu de test démontrent la robustesse de l'approche :
+L'interface utilisateur (<code>app.py</code>) offre trois modes d'interaction :
+1.  <strong>Test Unitaire :</strong> Sélectionne un paquet réseau aléatoire, le traite et affiche la probabilité d'attaque en temps réel.
+2.  <strong>Évaluation Complète :</strong> Lance un test sur 2000 échantillons pour vérifier la précision globale du modèle en direct.
+3.  <strong>Statistiques :</strong> Visualisation de la distribution des données de test.
+
+<h2>5. Installation et Lancement</h2>
+
+<h3>Pré-requis</h3>
+<ul>
+    <li>Python 3.8 ou supérieur</li>
+</ul>
+
+<h3>Installation des dépendances</h3>
+<pre><code>pip install -r requirements.txt</code></pre>
+
+<h3>Lancer l'Application Web (Démo)</h3>
+Pour utiliser l'interface graphique de détection :
+<pre><code>streamlit run app.py</code></pre>
+<p>L'application s'ouvrira automatiquement dans votre navigateur à l'adresse <code>http://localhost:8501</code>.</p>
+
+<h3>Ré-entraîner le modèle</h3>
+Si vous souhaitez reproduire l'entraînement ou modifier l'architecture :
+<pre><code>jupyter notebook unsw_nb15_RNN_LSTM.ipynb</code></pre>
+
+<h2>6. Performances</h2>
+
+Les résultats obtenus sur le jeu de test (82k échantillons) :
 
 <div align="center">
   <table border="1">
@@ -74,66 +112,24 @@ Les résultats obtenus sur le jeu de test démontrent la robustesse de l'approch
     </thead>
     <tbody>
       <tr>
-        <td><strong>Accuracy (Précision Globale)</strong></td>
-        <td><strong>~ 98%</strong></td>
+        <td><strong>Accuracy</strong></td>
+        <td><strong>~ 97-98%</strong></td>
       </tr>
       <tr>
-        <td><strong>Perte (Loss)</strong></td>
-        <td>< 0.10</td>
+        <td><strong>F1-Score (Attaque)</strong></td>
+        <td>0.98</td>
+      </tr>
+       <tr>
+        <td><strong>F1-Score (Normal)</strong></td>
+        <td>0.97</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<br>
-<div align="center">
-  <table border="1">
-    <thead>
-      <tr>
-        <th>Classe</th>
-        <th>Précision</th>
-        <th>Rappel (Recall)</th>
-        <th>F1-Score</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Normal</td>
-        <td>0.98</td>
-        <td>0.97</td>
-        <td>0.97</td>
-      </tr>
-      <tr>
-        <td>Attaque</td>
-        <td>0.97</td>
-        <td>0.98</td>
-        <td>0.98</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<h2>7. Auteurs</h2>
 
-<h2>5. Installation et Utilisation</h2>
-
-<h3>Pré-requis</h3>
-<ul>
-    <li>Python 3.8 ou supérieur</li>
-    <li>Un environnement virtuel est recommandé</li>
-</ul>
-
-<h3>Installation</h3>
-<pre><code>pip install -r requirements.txt</code></pre>
-
-<h3>Lancement</h3>
-<p>
-Le projet est contenu dans un Jupyter Notebook. Vous pouvez l'exécuter via Jupyter Lab, Jupyter Notebook ou Google Colab.
-</p>
-
-<pre><code>jupyter notebook unsw_nb15_RNN_LSTM.ipynb</code></pre>
-
-<h2>6. Auteurs</h2>
-
-<p>Ce projet a été réalisé dans le cadre d'études en ingénierie de Cybersécurité.</p>
+<p>Projet réalisé dans le cadre du cursus d'ingénierie en Cybersécurité.</p>
 <ul>
   <li><strong>DJILI Mohamed Amine</strong></li>
   <li><strong>El Kadiri Omar</strong></li>
