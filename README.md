@@ -54,7 +54,6 @@ L'architecture du modèle (API Keras/TensorFlow) est conçue pour la robustesse 
 <pre>
 .
 ├── app.py                      # Application Web de démonstration (Interface Streamlit)
-├── utils.py                    # Fonctions utilitaires pour le pré-traitement et l'inférence
 ├── requirements.txt            # Liste des dépendances Python
 ├── unsw_nb15_RNN_LSTM.ipynb    # Notebook Jupyter d'entraînement et d'analyse (EDA)
 │
